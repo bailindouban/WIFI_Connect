@@ -1,0 +1,41 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/dialog_wifi"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="@dimen/dialog_padding" >
+
+    <TextView
+        android:id="@+id/proxy_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/proxy_setting" />
+
+    <RadioGroup
+        android:id="@+id/proxy_setting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <RadioButton
+            android:id="@+id/proxy_no"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/proxy_no" />
+
+        <RadioButton
+            android:id="@+id/proxy_tw1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/proxy_tw1" />
+
+        <RadioButton
+            android:id="@+id/proxy_tw2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/proxy_tw2" />
+    </RadioGroup>
+
+</LinearLayout>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ASHZ_WIFI</string>
+
+    <!-- action bar menu -->
+    <string name="action_switch">Switch</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_help">Help</string>
+
+    <!-- proxy select menu -->
+    <string name="proxy_setting">Proxy Setting:</string>
+    <string name="proxy_no">No Proxy</string>
+    <string name="proxy_tw1">Taiwan Proxy (192.168.56.30)</string>
+    <string name="proxy_tw2">Taiwan Proxy (192.168.56.31)</string>
+
+    <!-- ListView -->
+    <string name="connected">Connected</string>
+    <string name="connecting">Try to connecting</string>
+    <string name="disabling">Try to disabling</string>
+    <string name="desc">Content Description</string>
+    <string name="signal_strength">Signal Strength</string>
+    <string name="auth">Security</string>
+
+    <!-- dialog button -->
+    <string name="ok">OK</string>
+    <string name="remove">Remove</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- help title -->
+    <string name="xbb_workspace">Your Help</string>
+    <string name="help_welcome">Welcome to ASHZ_WIFI</string>
+    <string name="help_indicator">Means this WIFI could be connected.</string>
+    <string name="help_feedback">Have Suggestions</string>
+    <string name="help_feedback_team">Please Contact US - JZ Team</string>
+
+</resources>

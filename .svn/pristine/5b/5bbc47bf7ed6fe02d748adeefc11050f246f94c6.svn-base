@@ -1,0 +1,22 @@
+<resources>
+
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="fresh_margin">4dp</dimen>
+    <dimen name="switch_margin">0dp</dimen>
+    <dimen name="list_item_padding">10dp</dimen>
+    <dimen name="dialog_padding">10dp</dimen>
+    <dimen name="switch_min_height">200dp</dimen>
+    <dimen name="max_width_auth">280dp</dimen>
+	
+    <!-- Help Dialog -->
+    <dimen name="indicator_padding_top">20dp</dimen>
+    <dimen name="indicator_padding_left">6dp</dimen>
+    <dimen name="indicator_padding_bottom">30dp</dimen>
+    <dimen name="green_dot_padding">6dp</dimen>
+    <dimen name="free_wifi_padding">6dp</dimen>
+    
+    <!-- List Item -->
+    <dimen name="base_text_size">16dp</dimen>
+</resources>

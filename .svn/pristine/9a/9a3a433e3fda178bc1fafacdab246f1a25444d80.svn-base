@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/action_switch"
+        android:actionLayout="@layout/layout_switch"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:title="@string/action_switch"/>
+    <item
+        android:id="@+id/action_help"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_help"/>
+</menu>

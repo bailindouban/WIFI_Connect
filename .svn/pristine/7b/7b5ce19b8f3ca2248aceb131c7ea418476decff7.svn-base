@@ -1,0 +1,5 @@
+<resources>
+
+    <color name="text_grey">#454545</color>
+    <color name="connected_green">#479d23</color>
+</resources>

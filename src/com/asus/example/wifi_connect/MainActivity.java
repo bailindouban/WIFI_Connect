@@ -1,0 +1,332 @@
+package com.asus.example.wifi_connect;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.res.Resources;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.Switch;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class MainActivity extends Activity {
+	private WifiAdmin mWifiAdmin;
+
+	// 扫描出的网络连接列表
+	private static List<Map<String, Object>> mListItems;
+	private Set<String> mSsidSet;
+	private static MyBaseAdapter mBaseAdapter;
+	private static ListView mListView;
+	private static ProgressBar mProgressBar;
+	private static Map<String, String> mSsidPass;
+	private Switch mSwitch;
+	private ImageView mRefresh;
+	private IntentFilter mFilter;
+	private MyReceiver mReceiver;
+	private WifiInfo mWifiInfo;
+	private Resources mResources;
+	private LayoutInflater mInflater;
+
+	// Life Circle - Start
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+		init();
+	}
+
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		super.onResume();
+		checkSystemWifi();
+
+		// Register BroadcastReceiver
+		registerReceiver(mReceiver, mFilter);
+	}
+
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+
+		// Unregister BroadcastReceiver
+		unregisterReceiver(mReceiver);
+	}
+
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		mProgressBar.setVisibility(View.GONE);
+		super.onDestroy();
+	}
+
+	// Life Circle - End
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.main, menu);
+
+		mSwitch = (Switch) menu.findItem(R.id.action_switch).getActionView().findViewById(R.id.switch_in_actionbar);
+		mSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				// TODO Auto-generated method stub
+				if (isChecked) {
+					mRefresh.setVisibility(View.VISIBLE);
+					startWifiTask();
+				} else {
+					mRefresh.setVisibility(View.GONE);
+					closeWifi();
+				}
+			}
+
+		});
+
+		mRefresh = (ImageView) menu.findItem(R.id.action_switch).getActionView()
+				.findViewById(R.id.refresh_in_actionbar);
+		mRefresh.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				mWifiAdmin.closeWifi();
+				mScanWifiTask.cancel(true);
+				// Fix a bug when press refresh, the wifi will be closed
+				while (mWifiAdmin.isWifiEnabled() == true) {
+				}
+				startWifiTask();
+			}
+
+		});
+
+		checkSystemWifi();
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// TODO Auto-generated method stub
+		switch (item.getItemId())
+			{
+			case R.id.action_help:
+				View layout = mInflater.inflate(R.layout.dialog_help, null);
+				new AlertDialog.Builder(this).setTitle(R.string.xbb_workspace).setView(layout)
+						.setPositiveButton(R.string.ok, null).show();
+				break;
+			default:
+				break;
+			}
+
+		return super.onOptionsItemSelected(item);
+	}
+
+	/**
+	 * 初始化参数
+	 */
+	private void init() {
+		mResources = getResources();
+		mSsidPass = LoginData.getSsidPass();
+		mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
+		mWifiAdmin = new WifiAdmin(getApplicationContext());
+		mListItems = new ArrayList<Map<String, Object>>();
+		mSsidSet = new HashSet<String>();
+
+		mInflater = getLayoutInflater();
+		// 创建一个SimpleAdapter
+		mBaseAdapter = new MyBaseAdapter(this, mListItems, mInflater);
+		// 为ListView设置Adapter
+		mListView = (ListView) findViewById(R.id.list_view);
+		mListView.setAdapter(mBaseAdapter);
+
+		// Create IntentFilter for BroadcastReceiver
+		mFilter = new IntentFilter();
+		mFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+		mFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+		mReceiver = new MyReceiver();
+	}
+
+	private ScanWifiTask mScanWifiTask;
+
+	private void startWifiTask() {
+		mScanWifiTask = new ScanWifiTask();
+		mScanWifiTask.execute();
+	}
+
+	/**
+	 * Create & Resume switch button state
+	 */
+	private boolean wifiState = false;
+	private int viewState = View.GONE;
+
+	private void checkSystemWifi() {
+		wifiState = mWifiAdmin.isWifiEnabled();
+		viewState = wifiState == true ? View.VISIBLE : View.GONE;
+		if (mSwitch != null) {
+			mSwitch.setChecked(wifiState);
+		}
+
+		if (mRefresh != null) {
+			mRefresh.setVisibility(viewState);
+		}
+	}
+
+	/**
+	 * Scan Wifi
+	 */
+	class ScanWifiTask extends AsyncTask<Void, Integer, List<ScanResult>> {
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			mListItems.clear();
+			mProgressBar.setVisibility(View.VISIBLE);
+			super.onPreExecute();
+		}
+
+		@Override
+		protected List<ScanResult> doInBackground(Void... params) {
+			// TODO Auto-generated method stub
+            List<ScanResult> wifiList = null;
+            do {
+                wifiList = mWifiAdmin.getWifiList();
+            } while (wifiList.size() == 0);
+
+			return wifiList;
+		}
+
+		@Override
+		protected void onPostExecute(List<ScanResult> wifiList) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(wifiList);
+			mProgressBar.setVisibility(View.GONE);
+			int level = 0;
+			int levelResId = R.drawable.ic_wifi_signal_1;
+			mSsidSet.clear();
+			for (ScanResult sr : wifiList) {
+				// Filter "" and repeat SSID
+				if (sr.SSID.equals("") || mSsidSet.contains(sr.SSID)) {
+					continue;
+				}
+				mSsidSet.add(sr.SSID);
+
+				Map<String, Object> listItem = new HashMap<String, Object>();
+				listItem.put("ssid", sr.SSID);
+				listItem.put("auth", sr.capabilities);
+				for (String key : mSsidPass.keySet()) {
+					if (sr.SSID.equals(key) || sr.capabilities.equals("[ESS]")) {
+						listItem.put("check", R.drawable.ic_wifi_check_useful);
+						break;
+					}
+				}
+
+				level = sr.level;
+				// 根据获得的信号强度发送信息
+				if (sr.capabilities.equals("[ESS]")) {
+					if (level <= 0 && level >= -50) {
+						levelResId = R.drawable.ic_wifi_signal_4;
+					} else if (level < -50 && level >= -70) {
+						levelResId = R.drawable.ic_wifi_signal_3;
+					} else if (level < -70 && level >= -80) {
+						levelResId = R.drawable.ic_wifi_signal_2;
+					} else if (level < -80 && level >= -100) {
+						levelResId = R.drawable.ic_wifi_signal_1;
+					} else {
+						levelResId = R.drawable.ic_wifi_block_signal_1;
+					}
+				} else {
+					if (level <= 0 && level >= -50) {
+						levelResId = R.drawable.ic_wifi_lock_signal_4;
+					} else if (level < -50 && level >= -70) {
+						levelResId = R.drawable.ic_wifi_lock_signal_3;
+					} else if (level < -70 && level >= -80) {
+						levelResId = R.drawable.ic_wifi_lock_signal_2;
+					} else if (level < -80 && level >= -100) {
+						levelResId = R.drawable.ic_wifi_lock_signal_1;
+					} else {
+						levelResId = R.drawable.ic_wifi_block_signal_1;
+					}
+				}
+
+				listItem.put("signal", levelResId);
+
+				mListItems.add(listItem);
+			}
+
+			for (String hssid : LoginData.getHiddenSsidPass().keySet()) {
+				if (!mSsidSet.contains(hssid)) {
+					mWifiAdmin.addHiddenNetwork(hssid);
+				}
+			}
+
+			mBaseAdapter.notifyDataSetChanged();
+		}
+
+	}
+
+	/**
+	 * Close Wifi
+	 */
+	private void closeWifi() {
+		if (mScanWifiTask != null) {
+			mScanWifiTask.cancel(true);
+		}
+
+		mWifiAdmin.closeWifi();
+		mListItems.clear();
+		mProgressBar.setVisibility(View.GONE);
+	}
+
+	class MyReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			// TODO Auto-generated method stub
+			if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)
+					|| intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+				switch (mWifiAdmin.checkWifiState())
+					{
+					case WifiManager.WIFI_STATE_ENABLING:
+						mWifiInfo = mWifiAdmin.getWifiInfo();
+						mBaseAdapter.setmConnectSsid(mWifiInfo.getSSID());
+						mBaseAdapter.setmConnectAuth(mResources.getString(R.string.connecting));
+						break;
+					case WifiManager.WIFI_STATE_ENABLED:
+						mWifiInfo = mWifiAdmin.getWifiInfo();
+						mBaseAdapter.setmConnectSsid(mWifiInfo.getSSID());
+						mBaseAdapter.setmConnectAuth(mResources.getString(R.string.connected));
+						break;
+					default:
+						mBaseAdapter.setmConnectSsid("");
+						break;
+					}
+
+				mBaseAdapter.notifyDataSetChanged();
+			}
+		}
+	}
+
+}
